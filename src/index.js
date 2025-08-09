@@ -1,8 +1,13 @@
+let IconApiUrl;
 export default {
-	async fetch(request) {
+	
+	async fetch(request,env) {
 	  const url = new URL(request.url);
 	  const path = url.pathname;
 	  const csvUrl = "https://raw.githubusercontent.com/timqian/chinese-independent-blogs/master/blogs-original.csv";
+	  const FaviconAPIUrl = "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&size=32&url="
+	  IconApiUrl = env.ICON_API_URL || "/getFavicon?url=";
+	  
   
 	  const res = await fetch(csvUrl);
 	  const csvText = await res.text();
@@ -17,6 +22,35 @@ export default {
 		return new Response(renderAllPage(blogs), {
 		  headers: { "content-type": "text/html;charset=utf-8" }
 		});
+	  } else if (path === "/getFavicon") {
+			const targetUrl = url.searchParams.get("url");
+			console.log(`Fetching favicon for URL: ${url}`);
+			
+			if (!targetUrl) {
+				return new Response("Missing 'url' query parameter", { status: 400 });
+			}
+			try {
+				// 发起反代请求
+				const response = await fetch(FaviconAPIUrl + encodeURIComponent(targetUrl), {
+				  headers: {
+					'User-Agent': request.headers.get('User-Agent') || 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+				  },
+				});
+	  
+				if (!response.ok) {
+				  return new Response(`Error fetching favicon: ${response.statusText}`, { status: response.status });
+				}
+	  
+				return new Response(response.body, {
+				  status: response.status,
+				  headers: {
+					'Content-Type': response.headers.get('Content-Type') || 'image/x-icon',
+					'Cache-Control': 'public, max-age=1296000', // 缓存 15 天
+				  },
+				});
+			  } catch (error) {
+				return new Response(`Error: ${error.message}`, { status: 500 });
+			  }
 	  } else {
 		return new Response(renderHomePage(blogs), {
 		  headers: { "content-type": "text/html;charset=utf-8" }
@@ -59,22 +93,22 @@ export default {
   `;
 
   const fallbackSvg = `
-	<svg t="1754750646066" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="9525" width="64" height="64">
-	<path d="M513.8 69.5c-244.4 0-443.2 198.8-443.2 443.2s198.8 443.2 443.2 443.2S957 757 957 512.6 758.2 69.5 513.8 69.5z m0 823.6c-209.8 0-380.5-170.7-380.5-380.5S304 132.2 513.8 132.2s380.5 170.7 380.5 380.5-170.7 380.4-380.5 380.4z" fill="#3E75FF" p-id="9526"></path><path d="M482.5 291.3h62.7v341.2h-62.7z" fill="#3E75FF" p-id="9527"></path><path d="M509.549684 783.821504a43.498695 43.498695 0 1 0 8.572567-86.573997 43.498695 43.498695 0 1 0-8.572567 86.573997Z" fill="#3E75FF" p-id="9528"></path>
+	<svg t="1754760422860" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7179" width="64" height="64">
+	<path d="M512 0c282.760533 0 512 229.239467 512 512 0 282.760533-229.239467 512-512 512-282.760533 0-512-229.239467-512-512C0 229.239467 229.239467 0 512 0z m0 648.533333a68.266667 68.266667 0 1 0 0 136.533334 68.266667 68.266667 0 0 0 0-136.533334z m0-68.266666a68.266667 68.266667 0 0 0 68.266667-68.266667V307.2a68.266667 68.266667 0 1 0-136.533334 0v204.8a68.266667 68.266667 0 0 0 68.266667 68.266667z" fill="#FF7F7F" p-id="7180"></path>
 	</svg>
   `;
   function utf8ToBase64(str) {
 	return btoa(unescape(encodeURIComponent(str)));
   }
   const fallbackFavicon = `data:image/svg+xml;base64,${utf8ToBase64(fallbackSvg)}`;
-  
+
   function renderSiteCard(site) {
 	const tagsHtml = site.tags.map(t => 
 	  `<span class="inline-block bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full text-xs mr-1 select-none">${t}</span>`
 	).join("");
 	return `
 	  <a href="${site.url}" target="_blank" rel="noopener noreferrer" tabindex="0" class="card flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-white cursor-pointer transition-shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 no-underline dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-blue-700 dark:text-blue-400">
-		<img src="https://favicons.fuzqing.workers.dev/api/getFavicon?url=${encodeURIComponent(site.url)}" alt="网站图标" class="w-8 h-8 rounded" onerror="this.onerror=null;this.src='${fallbackFavicon}';" />
+		<img src="${IconApiUrl + encodeURIComponent(site.url)}" alt="网站图标" class="w-8 h-8 rounded" onerror="this.onerror=null;this.src='${fallbackFavicon}';" />
 		<div class="flex-grow">
 		  <div class="text-blue-700 font-semibold text-lg">${site.name}</div>
 		  <div class="mt-1 text-sm text-gray-600">${tagsHtml}</div>
@@ -231,7 +265,7 @@ export default {
 			).join("");
 			return \`
 			<a href="\${site.url}" target="_blank" rel="noopener noreferrer" tabindex="0" class="card flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-white cursor-pointer transition-shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 no-underline">
-			  <img src="https://favicons.fuzqing.workers.dev/api/getFavicon?url=\${encodeURIComponent(site.url)}" alt="网站图标" class="w-8 h-8 rounded" onerror="this.onerror=null;this.src='${fallbackFavicon}';" />
+			  <img src="\${IconApiUrl + encodeURIComponent(site.url)}" alt="网站图标" class="w-8 h-8 rounded" onerror="this.onerror=null;this.src='${fallbackFavicon}';" />
 			  <div class="flex-grow">
 				<div class="text-blue-700 font-semibold text-lg">\${site.name}</div>
 				<div class="mt-1 text-sm text-gray-600">\${tagsHtml}</div>
@@ -316,7 +350,7 @@ export default {
 			).join("");
 			return \`
 			<a href="\${site.url}" target="_blank" rel="noopener noreferrer" tabindex="0" class="card flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-white cursor-pointer transition-shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 no-underline">
-			  <img src="https://favicons.fuzqing.workers.dev/api/getFavicon?url=\${encodeURIComponent(site.url)}" alt="网站图标" class="w-8 h-8 rounded" onerror="this.onerror=null;this.src='${fallbackFavicon}';" />
+			  <img src="\${IconApiUrl + encodeURIComponent(site.url)}" alt="网站图标" class="w-8 h-8 rounded" onerror="this.onerror=null;this.src='${fallbackFavicon}';" />
 			  <div class="flex-grow">
 				<div class="text-blue-700 font-semibold text-lg">\${site.name}</div>
 				<div class="mt-1 text-sm text-gray-600">\${tagsHtml}</div>
@@ -390,7 +424,7 @@ export default {
 			<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6" role="list">
 			  ${tagMap[tag].map(site => `
 				<a href="${site.url}" target="_blank" rel="noopener noreferrer" tabindex="0" class="card flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-white cursor-pointer transition-shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 no-underline dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-blue-700 dark:text-blue-400">
-				  <img src="https://favicons.fuzqing.workers.dev/api/getFavicon?url=${encodeURIComponent(site.url)}" alt="网站图标" class="w-8 h-8 rounded" onerror="this.onerror=null;this.src='${fallbackFavicon}';" />
+				  <img src="${IconApiUrl + encodeURIComponent(site.url)}" alt="网站图标" class="w-8 h-8 rounded" onerror="this.onerror=null;this.src='${fallbackFavicon}';" />
 				  <div class="flex-grow">
 					<div class="text-blue-700 font-semibold text-lg">${site.name}</div>
 				  </div>
