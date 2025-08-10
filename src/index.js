@@ -106,6 +106,11 @@ export default {
 	const tagsHtml = site.tags.map(t => 
 	  `<span class="inline-block bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full text-xs mr-1 select-none">${t}</span>`
 	).join("");
+	const rssBtn = site.rss ? `<div onclick="copyRSS(event,'${site.rss}')"
+	 class="ml-2 text-xs rounded hover:bg-gray-200">
+	 <svg t="1754784222350" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="17354" width="32" height="32">
+	 <path d="M544.059897 959.266898h-64.949141c-228.633593 0-415.697442-187.063849-415.697442-415.697442v-64.949141c0-228.633593 187.063849-415.697442 415.697442-415.697442h64.949141c228.633593 0 415.697442 187.063849 415.697442 415.697442v64.949141C959.756315 772.203049 772.692466 959.266898 544.059897 959.266898z" fill="#FD9B00" p-id="17355"></path><path d="M638.254276 718.937463c0-186.152591-151.296463-337.64564-337.178748-337.64564v-80.094453c230.17966 0 417.439071 187.459069 417.43907 417.739069H638.254276zM576.586686 718.937463h-80.368854c0-52.377878-20.342554-101.550994-57.208569-138.422129-36.882397-36.960212-85.890668-57.311981-138.048411-57.311981v-80.070904C452.934103 443.132449 576.586686 566.766602 576.586686 718.937463zM356.501512 607.516214c30.775945 0 55.629737 25.013518 55.629737 55.528373 0 30.607004-24.853792 55.351241-55.629737 55.351241-30.667413 0-55.583663-24.743213-55.583663-55.351241C300.917849 632.529733 325.834099 607.516214 356.501512 607.516214z" fill="#FFFFFF" p-id="17356">
+	 </path></svg></div>` : "";
 	return `
 	  <a href="${site.url}" target="_blank" rel="noopener noreferrer" tabindex="0" class="card flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-white cursor-pointer transition-shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 no-underline dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-blue-700 dark:text-blue-400">
 		<img src="${IconApiUrl + encodeURIComponent(site.url)}" alt="网站图标" class="w-8 h-8 rounded" onerror="this.onerror=null;this.src='${fallbackFavicon}';" />
@@ -113,6 +118,7 @@ export default {
 		  <div class="text-blue-700 font-semibold text-lg">${site.name}</div>
 		  <div class="mt-1 text-sm text-gray-600">${tagsHtml}</div>
 		</div>
+		${rssBtn}
 	  </a>
 	`;
   }
@@ -132,9 +138,24 @@ export default {
   function renderPagePublic(){
 	return `<button id="toTopBtn" title="回到顶部" aria-label="回到顶部" style="display:none;">↑</button>
 	<script>
-			tailwind.config = {
-			darkMode: 'class'
-		};
+		tailwind.config = {darkMode: 'class'};
+		function copyRSS(event,rss) {
+		event.preventDefault();
+        navigator.clipboard.writeText(rss).then(() => {
+          const tip = document.createElement("div");
+          tip.textContent = "RSS地址已复制";
+          tip.style.position = "fixed";
+          tip.style.bottom = "50px";
+          tip.style.right = "20px";
+          tip.style.background = "#2563eb";
+          tip.style.color = "#fff";
+          tip.style.padding = "6px 12px";
+          tip.style.borderRadius = "6px";
+          tip.style.zIndex = "9999";
+          document.body.appendChild(tip);
+          setTimeout(() => tip.remove(), 1500);
+        });
+      }
 		document.addEventListener("DOMContentLoaded", () => {
 		const themeToggle = document.getElementById("themeToggle");
 		const root = document.documentElement;
@@ -163,7 +184,7 @@ export default {
 		</script>
 		<footer class="border-t border-openai-border dark:border-dark-border bg-openai-gray dark:bg-dark-surface transition-colors">
 		<div class="max-w-4xl mx-auto px-4 py-6 text-center text-openai-light-gray dark:text-dark-text-secondary transition-colors">
-		<p>本站数据来自开源项目 <a href="https://github.com/timqian/chinese-independent-blogs" target="_blank" 
+		<p>本站数据来自Github开源项目 <a href="https://github.com/timqian/chinese-independent-blogs" target="_blank" 
 		rel="noopener noreferrer" tabindex="0" class="text-blue-700 font-semibold text-lg hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded no-underline">timqian/chinese-independent-blogs</a></p></div></footer>`;
   }
 
@@ -260,9 +281,15 @@ export default {
 		  const toTopBtn = document.getElementById("toTopBtn");
   
 		  function renderSiteCard(site) {
+		    const IconApiUrl = "${IconApiUrl}";
 			const tagsHtml = site.tags.map(t => 
 			  \`<span class="inline-block bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full text-xs mr-1 select-none">\${t}</span>\`
 			).join("");
+			const rssBtn = site.rss ? \`<div onclick="copyRSS(event,'\${site.rss}')"
+			class="ml-2 text-xs rounded hover:bg-gray-200">
+			<svg t="1754784222350" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="17354" width="32" height="32">
+			<path d="M544.059897 959.266898h-64.949141c-228.633593 0-415.697442-187.063849-415.697442-415.697442v-64.949141c0-228.633593 187.063849-415.697442 415.697442-415.697442h64.949141c228.633593 0 415.697442 187.063849 415.697442 415.697442v64.949141C959.756315 772.203049 772.692466 959.266898 544.059897 959.266898z" fill="#FD9B00" p-id="17355"></path><path d="M638.254276 718.937463c0-186.152591-151.296463-337.64564-337.178748-337.64564v-80.094453c230.17966 0 417.439071 187.459069 417.43907 417.739069H638.254276zM576.586686 718.937463h-80.368854c0-52.377878-20.342554-101.550994-57.208569-138.422129-36.882397-36.960212-85.890668-57.311981-138.048411-57.311981v-80.070904C452.934103 443.132449 576.586686 566.766602 576.586686 718.937463zM356.501512 607.516214c30.775945 0 55.629737 25.013518 55.629737 55.528373 0 30.607004-24.853792 55.351241-55.629737 55.351241-30.667413 0-55.583663-24.743213-55.583663-55.351241C300.917849 632.529733 325.834099 607.516214 356.501512 607.516214z" fill="#FFFFFF" p-id="17356">
+			</path></svg></div>\` : "";
 			return \`
 			<a href="\${site.url}" target="_blank" rel="noopener noreferrer" tabindex="0" class="card flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-white cursor-pointer transition-shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 no-underline">
 			  <img src="\${IconApiUrl + encodeURIComponent(site.url)}" alt="网站图标" class="w-8 h-8 rounded" onerror="this.onerror=null;this.src='${fallbackFavicon}';" />
@@ -270,6 +297,7 @@ export default {
 				<div class="text-blue-700 font-semibold text-lg">\${site.name}</div>
 				<div class="mt-1 text-sm text-gray-600">\${tagsHtml}</div>
 			  </div>
+			  \${rssBtn}
 			</a>
 			\`;
 		  }
@@ -319,7 +347,7 @@ export default {
 	  <meta property="og:description" content="一个收集和展示中文独立博客的网站，提供搜索和分类功能，帮助用户发现有趣的独立博客。">
 	  <meta property="og:image" content="https://i.051214.xyz/i/2025/08/09/215040.webp">
 	  <link rel="icon" href="data:image/svg+xml;base64,${utf8ToBase64(icon)}" />	
-	  <title>所有网站 - 中文独立博客列表</title>
+	  <title>所有博客网站 - 中文独立博客列表</title>
 	  <script src="https://cdn.tailwindcss.com"></script>
 	  ${renderPagePublicCss()}
 	</head>
@@ -345,9 +373,15 @@ export default {
 		  const toTopBtn = document.getElementById("toTopBtn");
   
 		  function renderSiteCard(site) {
+		    const IconApiUrl = "${IconApiUrl}";
 			const tagsHtml = site.tags.map(t => 
 			  \`<span class="inline-block bg-blue-200 text-blue-800 px-2 py-0.5 rounded-full text-xs mr-1 select-none">\${t}</span>\`
 			).join("");
+			const rssBtn = site.rss ? \`<div onclick="copyRSS(event,'\${site.rss}')"
+			class="ml-2 text-xs rounded hover:bg-gray-200">
+			<svg t="1754784222350" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="17354" width="32" height="32">
+			<path d="M544.059897 959.266898h-64.949141c-228.633593 0-415.697442-187.063849-415.697442-415.697442v-64.949141c0-228.633593 187.063849-415.697442 415.697442-415.697442h64.949141c228.633593 0 415.697442 187.063849 415.697442 415.697442v64.949141C959.756315 772.203049 772.692466 959.266898 544.059897 959.266898z" fill="#FD9B00" p-id="17355"></path><path d="M638.254276 718.937463c0-186.152591-151.296463-337.64564-337.178748-337.64564v-80.094453c230.17966 0 417.439071 187.459069 417.43907 417.739069H638.254276zM576.586686 718.937463h-80.368854c0-52.377878-20.342554-101.550994-57.208569-138.422129-36.882397-36.960212-85.890668-57.311981-138.048411-57.311981v-80.070904C452.934103 443.132449 576.586686 566.766602 576.586686 718.937463zM356.501512 607.516214c30.775945 0 55.629737 25.013518 55.629737 55.528373 0 30.607004-24.853792 55.351241-55.629737 55.351241-30.667413 0-55.583663-24.743213-55.583663-55.351241C300.917849 632.529733 325.834099 607.516214 356.501512 607.516214z" fill="#FFFFFF" p-id="17356">
+			</path></svg></div>\` : "";
 			return \`
 			<a href="\${site.url}" target="_blank" rel="noopener noreferrer" tabindex="0" class="card flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-white cursor-pointer transition-shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 no-underline">
 			  <img src="\${IconApiUrl + encodeURIComponent(site.url)}" alt="网站图标" class="w-8 h-8 rounded" onerror="this.onerror=null;this.src='${fallbackFavicon}';" />
@@ -355,6 +389,7 @@ export default {
 				<div class="text-blue-700 font-semibold text-lg">\${site.name}</div>
 				<div class="mt-1 text-sm text-gray-600">\${tagsHtml}</div>
 			  </div>
+			  \${rssBtn}
 			</a>
 			\`;
 		  }
@@ -411,7 +446,7 @@ export default {
 	  <meta property="og:description" content="一个收集和展示中文独立博客的网站，提供搜索和分类功能，帮助用户发现有趣的独立博客。">
 	  <meta property="og:image" content="https://i.051214.xyz/i/2025/08/09/215040.webp">
 	  <link rel="icon" href="data:image/svg+xml;base64,${utf8ToBase64(icon)}" />	
-	  <title>标签 - 中文独立博客列表</title>
+	  <title>标签分类 - 中文独立博客列表</title>
 	  <script src="https://cdn.tailwindcss.com"></script>
 	  ${renderPagePublicCss()}
 	</head>
@@ -428,6 +463,11 @@ export default {
 				  <div class="flex-grow">
 					<div class="text-blue-700 font-semibold text-lg">${site.name}</div>
 				  </div>
+				  <div onclick="copyRSS(event,'${site.rss}')"
+					class="ml-2 text-xs rounded hover:bg-gray-200">
+					<svg t="1754784222350" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="17354" width="32" height="32">
+					<path d="M544.059897 959.266898h-64.949141c-228.633593 0-415.697442-187.063849-415.697442-415.697442v-64.949141c0-228.633593 187.063849-415.697442 415.697442-415.697442h64.949141c228.633593 0 415.697442 187.063849 415.697442 415.697442v64.949141C959.756315 772.203049 772.692466 959.266898 544.059897 959.266898z" fill="#FD9B00" p-id="17355"></path><path d="M638.254276 718.937463c0-186.152591-151.296463-337.64564-337.178748-337.64564v-80.094453c230.17966 0 417.439071 187.459069 417.43907 417.739069H638.254276zM576.586686 718.937463h-80.368854c0-52.377878-20.342554-101.550994-57.208569-138.422129-36.882397-36.960212-85.890668-57.311981-138.048411-57.311981v-80.070904C452.934103 443.132449 576.586686 566.766602 576.586686 718.937463zM356.501512 607.516214c30.775945 0 55.629737 25.013518 55.629737 55.528373 0 30.607004-24.853792 55.351241-55.629737 55.351241-30.667413 0-55.583663-24.743213-55.583663-55.351241C300.917849 632.529733 325.834099 607.516214 356.501512 607.516214z" fill="#FFFFFF" p-id="17356">
+					</path></svg></div>
 				</a>
 			  `).join("")}
 			</div>

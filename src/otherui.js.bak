@@ -1,0 +1,183 @@
+export default {
+	async fetch(request) {
+	  const url = new URL(request.url);
+	  const path = url.pathname;
+  
+	  const csvUrl = "https://raw.githubusercontent.com/timqian/chinese-independent-blogs/master/blogs-original.csv";
+	  const res = await fetch(csvUrl);
+	  const text = await res.text();
+  
+	  const sites = parseCSV(text);
+  
+	  if (path === "/") {
+		return new Response(renderPage("home", sites), { headers: { "content-type": "text/html;charset=UTF-8" } });
+	  } else if (path === "/all") {
+		return new Response(renderPage("all", sites), { headers: { "content-type": "text/html;charset=UTF-8" } });
+	  } else if (path === "/tags") {
+		return new Response(renderPage("tags", sites), { headers: { "content-type": "text/html;charset=UTF-8" } });
+	  } else {
+		return new Response("404 Not Found", { status: 404 });
+	  }
+	}
+  };
+  
+  function parseCSV(text) {
+	const lines = text.trim().split("\n").slice(1);
+	return lines.map(line => {
+	  const cols = line.split(",").map(c => c.trim());
+	  const tags = cols[3] ? cols[3].split(/;|、/).map(t => t.trim()) : [];
+	  return {
+		name: cols[0],
+		url: cols[1],
+		rss: cols[2],
+		tags
+	  };
+	});
+  }
+  
+  function renderPage(type, sites) {
+	const fallbackFavicon = `data:image/svg+xml;base64,${btoa('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="100%" height="100%" fill="#ccc"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="28">WWW</text></svg>')}`;
+  
+	let content = "";
+	let title = "中文独立博客列表";
+  
+	if (type === "home") {
+	  const randomSites = sites.sort(() => 0.5 - Math.random()).slice(0, 20);
+	  content = renderSiteGrid(randomSites, fallbackFavicon);
+	} else if (type === "all") {
+	  content = renderSiteGrid(sites, fallbackFavicon);
+	} else if (type === "tags") {
+	  const tagMap = {};
+	  sites.forEach(site => {
+		site.tags.forEach(tag => {
+		  if (!tagMap[tag]) tagMap[tag] = [];
+		  tagMap[tag].push(site);
+		});
+	  });
+	  content = Object.keys(tagMap).sort().map(tag => `
+		<section>
+		  <h2 class="text-2xl font-bold my-4">${tag}</h2>
+		  ${renderSiteGrid(tagMap[tag], fallbackFavicon)}
+		</section>
+	  `).join("");
+	}
+  
+	return `
+	<!DOCTYPE html>
+	<html lang="zh-CN" class="light">
+	<head>
+	  <meta charset="UTF-8" />
+	  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	  <title>${title}</title>
+	  <script src="https://cdn.tailwindcss.com"></script>
+	  <style>
+		a { text-decoration: none; }
+		.dark { background-color: #1a202c; color: #e2e8f0; }
+		.dark .card { background-color: #2d3748; color: #e2e8f0; }
+	  </style>
+	</head>
+	<body class="transition-colors duration-300">
+	  <header class="p-4 bg-blue-600 text-white flex justify-between items-center">
+		<div class="text-lg font-bold">中文独立博客列表</div>
+		<nav class="flex items-center space-x-4">
+		  <a href="/" class="hover:underline">首页</a>
+		  <a href="/all" class="hover:underline">所有网站</a>
+		  <a href="/tags" class="hover:underline">标签</a>
+		  <a href="https://github.com/timqian/chinese-independent-blogs" target="_blank" class="hover:underline">提交你的博客</a>
+		  <button id="themeToggle" class="px-2 py-1 bg-gray-200 rounded text-black">🌙</button>
+		</nav>
+	  </header>
+  
+	  <main class="p-4">
+		<div class="flex justify-center my-6">
+		  <input id="searchInput" type="text" placeholder="搜索站点或标签..." class="border border-gray-300 rounded p-2 w-1/2" />
+		</div>
+		<div id="siteGrid">${content}</div>
+	  </main>
+  
+	  <footer class="p-4 bg-gray-100 text-center text-sm text-gray-600">
+		本站数据来自 GitHub 项目 <a href="https://github.com/timqian/chinese-independent-blogs" class="text-blue-500" target="_blank">chinese-independent-blogs</a> ，仅供学习与交流使用。
+	  </footer>
+  
+	  <button id="toTopBtn" title="回到顶部" aria-label="回到顶部" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700" style="display:none;">↑</button>
+  
+	  <script>
+		document.addEventListener("DOMContentLoaded", () => {
+		  const toTopBtn = document.getElementById("toTopBtn");
+		  const themeToggle = document.getElementById("themeToggle");
+		  const body = document.body;
+		  const searchInput = document.getElementById("searchInput");
+		  const siteGrid = document.getElementById("siteGrid");
+		  const originalHTML = siteGrid.innerHTML;
+  
+		  // 主题初始化
+		  if (localStorage.getItem("theme") === "dark") {
+			body.classList.add("dark");
+			themeToggle.textContent = "☀️";
+		  }
+  
+		  // 主题切换
+		  themeToggle.addEventListener("click", () => {
+			if (body.classList.contains("dark")) {
+			  body.classList.remove("dark");
+			  localStorage.setItem("theme", "light");
+			  themeToggle.textContent = "🌙";
+			} else {
+			  body.classList.add("dark");
+			  localStorage.setItem("theme", "dark");
+			  themeToggle.textContent = "☀️";
+			}
+		  });
+  
+		  // 回到顶部
+		  window.addEventListener("scroll", () => {
+			toTopBtn.style.display = window.scrollY > 200 ? "block" : "none";
+		  });
+		  toTopBtn.addEventListener("click", () => {
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		  });
+  
+		  // 搜索
+		  searchInput.addEventListener("input", () => {
+			const term = searchInput.value.trim().toLowerCase();
+			if (!term) {
+			  siteGrid.innerHTML = originalHTML;
+			  return;
+			}
+			const cards = siteGrid.querySelectorAll(".card");
+			cards.forEach(card => {
+			  const name = card.dataset.name;
+			  const tags = card.dataset.tags;
+			  if (name.includes(term) || tags.includes(term)) {
+				card.style.display = "";
+			  } else {
+				card.style.display = "none";
+			  }
+			});
+		  });
+		});
+	  </script>
+	</body>
+	</html>
+	`;
+  }
+  
+  function renderSiteGrid(sites, fallbackFavicon) {
+	return `
+	  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+		${sites.map(site => `
+		  <a href="${site.url}" target="_blank" class="card p-4 border border-gray-300 rounded-lg bg-white cursor-pointer transition-shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+			 data-name="${site.name.toLowerCase()}" data-tags="${site.tags.join(" ").toLowerCase()}">
+			<div class="flex items-center space-x-4">
+			  <img src="https://favicons.fuzqing.workers.dev/api/getFavicon?url=${encodeURIComponent(site.url)}" alt="网站图标" class="w-8 h-8 rounded" onerror="this.onerror=null;this.src='${fallbackFavicon}';" />
+			  <div class="flex-grow">
+				<div class="text-blue-700 font-semibold text-lg">${site.name}</div>
+				<div class="text-sm text-gray-500">${site.tags.join(", ")}</div>
+			  </div>
+			</div>
+		  </a>
+		`).join("")}
+	  </div>
+	`;
+  }
+  
