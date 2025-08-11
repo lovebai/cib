@@ -14,7 +14,11 @@ export default {
   
 	  const blogs = parseCSV(csvText);
   
-	  if (path === "/tags") {
+	  if (path === "/") {
+		return new Response(renderHomePage(blogs), {
+		  headers: { "content-type": "text/html;charset=utf-8" }
+		});
+	  } else if (path === "/tags") {
 		return new Response(renderTagsPage(blogs), {
 		  headers: { "content-type": "text/html;charset=utf-8" }
 		});
@@ -52,7 +56,7 @@ export default {
 				return new Response(`Error: ${error.message}`, { status: 500 });
 			  }
 	  } else {
-		return new Response(renderHomePage(blogs), {
+		return new Response(renderNoPage(), {
 		  headers: { "content-type": "text/html;charset=utf-8" }
 		});
 	  }
@@ -237,6 +241,39 @@ export default {
   		  }
         }
 	  </style>`;
+  }
+
+  function renderNoPage() {
+	return `
+	<!DOCTYPE html>
+	<html lang="zh-CN" class="scroll-smooth">
+	<head>
+	  <meta charset="utf-8" />
+	  <meta name="viewport" content="width=device-width, initial-scale=1" />
+	  <meta name="description" content="404 - 页面未找到">
+	  <meta name="keywords" content="独立博客, 中文博客, 博客导航, 博客列表, 独立网站, 网站导航">
+	  <meta name="author" content="酷酷的白">
+	  <meta property="og:title" content="404  -中文独立博客列表">
+	  <meta property="og:description" content="一个收集和展示中文独立博客的网站，提供搜索和分类功能，帮助用户发现有趣的独立博客。">
+	  <meta property="og:image" content="https://i.051214.xyz/i/2025/08/09/215040.webp">
+	  <link rel="icon" href="data:image/svg+xml;base64,${utf8ToBase64(icon)}" />		
+	  <title>404 - 中文独立博客列表</title>
+	  <script src="https://cdn.tailwindcss.com"></script>
+	  ${renderPagePublicCss()}
+	</head>
+	<body class="bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+	  ${renderNavbar()}
+	  <main class="flex-grow container mx-auto px-4 flex flex-col items-center justify-center py-20 min-h-[calc(100vh-64px)] gap-12">
+		<div class="max-w-xl">
+		  <h1 class="text-4xl font-extrabold text-blue-700 select-text"> <div style="display: flex;flex-direction: column;align-items: center;"><div>${fallbackSvg}</div> 404 - 页面不存在！</div> </h1>
+		</div>
+	  </main>
+  
+	  ${renderPagePublic()}
+  
+	</body>
+	</html>
+	`;
   }
   
   function renderHomePage(blogs) {
